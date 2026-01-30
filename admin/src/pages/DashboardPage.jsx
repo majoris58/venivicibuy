@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, FolderTree, Globe, MousePointerClick, TrendingUp, Eye } from 'lucide-react';
+import { Package, FolderTree, Globe, MousePointerClick, TrendingUp, Eye, Image, Flame } from 'lucide-react';
 import api from '../lib/api';
 
 export default function DashboardPage() {
@@ -21,6 +21,8 @@ export default function DashboardPage() {
     { label: 'Toplam Ürün', value: overview.totalProducts || 0, icon: Package, color: 'bg-blue-500' },
     { label: 'Kategoriler', value: overview.totalCategories || 0, icon: FolderTree, color: 'bg-green-500' },
     { label: 'Platformlar', value: overview.totalPlatforms || 0, icon: Globe, color: 'bg-purple-500' },
+    { label: 'Bannerlar', value: overview.totalBanners || 0, icon: Image, color: 'bg-cyan-500' },
+    { label: 'Günün Fırsatı', value: overview.dealOfDayCount || 0, icon: Flame, color: 'bg-red-500' },
     { label: 'Toplam Tıklama', value: overview.totalClicks || 0, icon: MousePointerClick, color: 'bg-orange-500' },
     { label: 'Haftalık Tıklama', value: overview.weeklyClicks || 0, icon: TrendingUp, color: 'bg-pink-500' },
   ];
@@ -29,7 +31,7 @@ export default function DashboardPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
         {cards.map((card) => (
           <div key={card.label} className="card flex items-center gap-4">
             <div className={`${card.color} p-3 rounded-xl`}>
@@ -58,7 +60,7 @@ export default function DashboardPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{product.title}</p>
-                  <p className="text-xs text-gray-500">{product.bestPrice?.toLocaleString('tr-TR')} TL</p>
+                  <p className="text-xs text-gray-500">{product.price?.toLocaleString('tr-TR')} TL</p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1 text-sm text-gray-600">

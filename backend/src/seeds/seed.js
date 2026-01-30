@@ -22,10 +22,11 @@ async function seed() {
     { name: 'Hepsiburada', slug: 'hepsiburada', website: 'https://www.hepsiburada.com', color: '#FF6000' },
     { name: 'N11', slug: 'n11', website: 'https://www.n11.com', color: '#7B2D8E' },
     { name: 'Amazon TR', slug: 'amazon-tr', website: 'https://www.amazon.com.tr', color: '#FF9900' },
-    { name: 'GittiGidiyor', slug: 'gittigidiyor', website: 'https://www.gittigidiyor.com', color: '#4B0082' },
     { name: 'Çiçeksepeti', slug: 'ciceksepeti', website: 'https://www.ciceksepeti.com', color: '#E91E63' },
     { name: 'Morhipo', slug: 'morhipo', website: 'https://www.morhipo.com', color: '#00BCD4' },
-    { name: 'BoynerEvde', slug: 'boynerevde', website: 'https://www.boyner.com.tr', color: '#000000' },
+    { name: 'Boyner', slug: 'boyner', website: 'https://www.boyner.com.tr', color: '#000000' },
+    { name: 'Idefix', slug: 'idefix', website: 'https://www.idefix.com', color: '#FF6B35' },
+    { name: 'Pazarama', slug: 'pazarama', website: 'https://www.pazarama.com', color: '#5C2D91' },
   ];
 
   for (const p of platforms) {

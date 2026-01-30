@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 
@@ -13,8 +13,10 @@ export default function ProductFormPage() {
   const [platforms, setPlatforms] = useState([]);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    title: '', description: '', brand: '', category: '', thumbnail: '',
-    images: [''], tags: '', isFeatured: false, isActive: true, prices: [],
+    title: '', description: '', brand: '', category: '', platform: '',
+    price: '', originalPrice: '', url: '', affiliateUrl: '',
+    thumbnail: '', tags: '',
+    isFeatured: false, isDealOfDay: false, isActive: true,
   });
 
   useEffect(() => {
@@ -31,15 +33,14 @@ export default function ProductFormPage() {
         const p = res.data;
         setForm({
           title: p.title || '', description: p.description || '', brand: p.brand || '',
-          category: p.category?._id || '', thumbnail: p.thumbnail || '',
-          images: p.images?.length ? p.images : [''],
+          category: p.category?._id || '', platform: p.platform?._id || '',
+          price: p.price || '', originalPrice: p.originalPrice || '',
+          url: p.url || '', affiliateUrl: p.affiliateUrl || '',
+          thumbnail: p.thumbnail || '',
           tags: (p.tags || []).join(', '),
-          isFeatured: p.isFeatured || false, isActive: p.isActive !== false,
-          prices: (p.prices || []).map((pr) => ({
-            platform: pr.platform?._id || pr.platform,
-            price: pr.price, originalPrice: pr.originalPrice || '',
-            url: pr.url, affiliateUrl: pr.affiliateUrl || '', inStock: pr.inStock !== false,
-          })),
+          isFeatured: p.isFeatured || false,
+          isDealOfDay: p.isDealOfDay || false,
+          isActive: p.isActive !== false,
         });
       });
     }
@@ -47,38 +48,15 @@ export default function ProductFormPage() {
 
   const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  const addPrice = () => {
-    setForm((prev) => ({
-      ...prev,
-      prices: [...prev.prices, { platform: '', price: '', originalPrice: '', url: '', affiliateUrl: '', inStock: true }],
-    }));
-  };
-
-  const updatePrice = (index, field, value) => {
-    setForm((prev) => {
-      const prices = [...prev.prices];
-      prices[index] = { ...prices[index], [field]: value };
-      return { ...prev, prices };
-    });
-  };
-
-  const removePrice = (index) => {
-    setForm((prev) => ({ ...prev, prices: prev.prices.filter((_, i) => i !== index) }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       const data = {
         ...form,
-        images: form.images.filter(Boolean),
+        price: Number(form.price),
+        originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-        prices: form.prices.map((p) => ({
-          ...p,
-          price: Number(p.price),
-          originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
-        })),
       };
 
       if (isEdit) {
@@ -137,75 +115,56 @@ export default function ProductFormPage() {
               <label className="label">Etiketler (virgülle ayırın)</label>
               <input type="text" value={form.tags} onChange={(e) => updateField('tags', e.target.value)} className="input" placeholder="indirim, çok satan, yeni" />
             </div>
-            <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.isFeatured} onChange={(e) => updateField('isFeatured', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-primary-600" />
-                <span className="text-sm text-gray-700">Öne Çıkan</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.isActive} onChange={(e) => updateField('isActive', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-primary-600" />
-                <span className="text-sm text-gray-700">Aktif</span>
-              </label>
+          </div>
+        </div>
+
+        {/* Platform & Price */}
+        <div className="card">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Platform & Fiyat</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="label">Platform *</label>
+              <select value={form.platform} onChange={(e) => updateField('platform', e.target.value)} className="input" required>
+                <option value="">Seçin</option>
+                {platforms.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Fiyat (TL) *</label>
+              <input type="number" step="0.01" value={form.price} onChange={(e) => updateField('price', e.target.value)} className="input" required />
+            </div>
+            <div>
+              <label className="label">Orijinal Fiyat (TL)</label>
+              <input type="number" step="0.01" value={form.originalPrice} onChange={(e) => updateField('originalPrice', e.target.value)} className="input" placeholder="İndirim öncesi fiyat" />
+            </div>
+            <div>
+              <label className="label">Ürün URL *</label>
+              <input type="url" value={form.url} onChange={(e) => updateField('url', e.target.value)} className="input" required />
+            </div>
+            <div>
+              <label className="label">Affiliate URL</label>
+              <input type="url" value={form.affiliateUrl} onChange={(e) => updateField('affiliateUrl', e.target.value)} className="input" placeholder="Referans linki" />
             </div>
           </div>
         </div>
 
-        {/* Platform Prices */}
+        {/* Visibility */}
         <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Platform Fiyatları</h2>
-            <button type="button" onClick={addPrice} className="btn-primary flex items-center gap-1 text-sm py-1.5">
-              <Plus className="w-4 h-4" /> Platform Ekle
-            </button>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Görünürlük</h2>
+          <div className="flex flex-wrap items-center gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={form.isFeatured} onChange={(e) => updateField('isFeatured', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-primary-600" />
+              <span className="text-sm text-gray-700">Öne Çıkan Ürün</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={form.isDealOfDay} onChange={(e) => updateField('isDealOfDay', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-red-500" />
+              <span className="text-sm text-gray-700">Günün Fırsatı</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={form.isActive} onChange={(e) => updateField('isActive', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-primary-600" />
+              <span className="text-sm text-gray-700">Aktif</span>
+            </label>
           </div>
-
-          {form.prices.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">Henüz fiyat eklenmedi. Yukarıdan platform ekleyin.</p>
-          ) : (
-            <div className="space-y-4">
-              {form.prices.map((price, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-700">Platform {index + 1}</span>
-                    <button type="button" onClick={() => removePrice(index)} className="p-1 text-red-400 hover:text-red-600">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <div>
-                      <label className="label">Platform *</label>
-                      <select value={price.platform} onChange={(e) => updatePrice(index, 'platform', e.target.value)} className="input" required>
-                        <option value="">Seçin</option>
-                        {platforms.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="label">Fiyat (TL) *</label>
-                      <input type="number" step="0.01" value={price.price} onChange={(e) => updatePrice(index, 'price', e.target.value)} className="input" required />
-                    </div>
-                    <div>
-                      <label className="label">Orijinal Fiyat (TL)</label>
-                      <input type="number" step="0.01" value={price.originalPrice} onChange={(e) => updatePrice(index, 'originalPrice', e.target.value)} className="input" />
-                    </div>
-                    <div>
-                      <label className="label">Ürün URL *</label>
-                      <input type="url" value={price.url} onChange={(e) => updatePrice(index, 'url', e.target.value)} className="input" required />
-                    </div>
-                    <div>
-                      <label className="label">Affiliate URL</label>
-                      <input type="url" value={price.affiliateUrl} onChange={(e) => updatePrice(index, 'affiliateUrl', e.target.value)} className="input" />
-                    </div>
-                    <div className="flex items-end">
-                      <label className="flex items-center gap-2 cursor-pointer pb-2">
-                        <input type="checkbox" checked={price.inStock} onChange={(e) => updatePrice(index, 'inStock', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-primary-600" />
-                        <span className="text-sm text-gray-700">Stokta</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="flex justify-end gap-3">

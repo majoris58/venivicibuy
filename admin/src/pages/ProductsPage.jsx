@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, Package, ExternalLink, Star } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Package, Star, Flame } from 'lucide-react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 
@@ -81,8 +81,9 @@ export default function ProductsPage() {
                   <tr className="border-b border-gray-100">
                     <th className="text-left py-3 px-4 font-medium text-gray-500">Ürün</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-500">Kategori</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">En İyi Fiyat</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">Platformlar</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Fiyat</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Platform</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">Etiketler</th>
                     <th className="text-center py-3 px-4 font-medium text-gray-500">Durum</th>
                     <th className="text-right py-3 px-4 font-medium text-gray-500">İşlemler</th>
                   </tr>
@@ -98,25 +99,29 @@ export default function ProductsPage() {
                             <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"><Package className="w-5 h-5 text-gray-400" /></div>
                           )}
                           <div>
-                            <p className="font-medium text-gray-900 flex items-center gap-1">
-                              {product.isFeatured && <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />}
-                              {product.title}
-                            </p>
+                            <p className="font-medium text-gray-900">{product.title}</p>
                             <p className="text-xs text-gray-400">{product.brand}</p>
                           </div>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-gray-600">{product.category?.name || '-'}</td>
-                      <td className="py-3 px-4 font-semibold text-gray-900">
-                        {product.bestPrice ? `${product.bestPrice.toLocaleString('tr-TR')} TL` : '-'}
+                      <td className="py-3 px-4">
+                        <span className="font-semibold text-gray-900">{product.price?.toLocaleString('tr-TR')} TL</span>
+                        {product.originalPrice && (
+                          <span className="block text-xs text-gray-400 line-through">{product.originalPrice.toLocaleString('tr-TR')} TL</span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex gap-1">
-                          {product.prices?.map((p) => (
-                            <span key={p._id} className="inline-block w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: p.platform?.color || '#999' }} title={p.platform?.name}>
-                              {p.platform?.name?.charAt(0)}
-                            </span>
-                          ))}
+                        {product.platform && (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium text-white" style={{ backgroundColor: product.platform.color || '#999' }}>
+                            {product.platform.name}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {product.isFeatured && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" title="Öne Çıkan" />}
+                          {product.isDealOfDay && <Flame className="w-4 h-4 text-red-500" title="Günün Fırsatı" />}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-center">

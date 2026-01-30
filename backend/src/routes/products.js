@@ -8,25 +8,25 @@ const router = express.Router();
 // Public: list products with filtering
 router.get('/', async (req, res) => {
   try {
-    const { category, platform, search, sort, featured, page = 1, limit = 20 } = req.query;
+    const { category, platform, search, sort, featured, dealOfDay, page = 1, limit = 20 } = req.query;
     const filter = { isActive: true };
 
     if (category) filter.category = category;
-    if (platform) filter['prices.platform'] = platform;
+    if (platform) filter.platform = platform;
     if (featured === 'true') filter.isFeatured = true;
+    if (dealOfDay === 'true') filter.isDealOfDay = true;
     if (search) filter.$text = { $search: search };
 
     let sortOption = { createdAt: -1 };
-    if (sort === 'price_asc') sortOption = { bestPrice: 1 };
-    else if (sort === 'price_desc') sortOption = { bestPrice: -1 };
-    else if (sort === 'popular') sortOption = { viewCount: -1 };
+    if (sort === 'price_asc') sortOption = { price: 1 };
+    else if (sort === 'price_desc') sortOption = { price: -1 };
+    else if (sort === 'popular') sortOption = { clickCount: -1 };
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [products, total] = await Promise.all([
       Product.find(filter)
         .populate('category', 'name slug icon')
-        .populate('prices.platform', 'name slug logo color')
-        .populate('bestPlatform', 'name slug logo color')
+        .populate('platform', 'name slug logo color')
         .sort(sortOption)
         .skip(skip)
         .limit(parseInt(limit)),
@@ -52,14 +52,12 @@ router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
       .populate('category', 'name slug icon')
-      .populate('prices.platform', 'name slug logo color website')
-      .populate('bestPlatform', 'name slug logo color');
+      .populate('platform', 'name slug logo color website');
 
     if (!product || !product.isActive) {
       return res.status(404).json({ error: 'Ürün bulunamadı' });
     }
 
-    // Increment view count
     product.viewCount += 1;
     await product.save();
 
@@ -72,27 +70,21 @@ router.get('/:id', async (req, res) => {
 // Public: track click and redirect
 router.post('/:id/click', async (req, res) => {
   try {
-    const { platformId } = req.body;
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ error: 'Ürün bulunamadı' });
 
-    const priceEntry = product.prices.find((p) => p.platform.toString() === platformId);
-    if (!priceEntry) return res.status(404).json({ error: 'Platform fiyatı bulunamadı' });
-
-    // Log the click
     await ClickLog.create({
       product: product._id,
-      platform: platformId,
+      platform: product.platform,
       userAgent: req.headers['user-agent'],
       ip: req.ip,
       referrer: req.headers.referer,
     });
 
-    // Increment click count
     product.clickCount += 1;
     await product.save();
 
-    const redirectUrl = priceEntry.affiliateUrl || priceEntry.url;
+    const redirectUrl = product.affiliateUrl || product.url;
     res.json({ url: redirectUrl });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -110,8 +102,7 @@ router.get('/admin/all', authMiddleware, async (req, res) => {
     const [products, total] = await Promise.all([
       Product.find(filter)
         .populate('category', 'name slug')
-        .populate('prices.platform', 'name slug logo')
-        .populate('bestPlatform', 'name slug logo')
+        .populate('platform', 'name slug logo color')
         .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -134,8 +125,7 @@ router.post('/', authMiddleware, async (req, res) => {
     await product.save();
     const populated = await Product.findById(product._id)
       .populate('category', 'name slug')
-      .populate('prices.platform', 'name slug logo')
-      .populate('bestPlatform', 'name slug logo');
+      .populate('platform', 'name slug logo color');
     res.status(201).json(populated);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -147,8 +137,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
       .populate('category', 'name slug')
-      .populate('prices.platform', 'name slug logo')
-      .populate('bestPlatform', 'name slug logo');
+      .populate('platform', 'name slug logo color');
     if (!product) return res.status(404).json({ error: 'Ürün bulunamadı' });
     res.json(product);
   } catch (err) {

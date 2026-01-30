@@ -1,16 +1,10 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../constants/theme';
 
 export default function ProductCard({ product, onPress, horizontal = false }) {
-  const hasDiscount = product.prices?.some((p) => p.originalPrice && p.originalPrice > p.price);
-  const bestOriginalPrice = product.prices?.reduce((max, p) => {
-    if (p.originalPrice && p.originalPrice > (max || 0)) return p.originalPrice;
-    return max;
-  }, null);
-  const discountPercent = bestOriginalPrice && product.bestPrice
-    ? Math.round(((bestOriginalPrice - product.bestPrice) / bestOriginalPrice) * 100)
+  const discountPercent = product.originalPrice && product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
 
   if (horizontal) {
@@ -18,19 +12,20 @@ export default function ProductCard({ product, onPress, horizontal = false }) {
       <TouchableOpacity style={styles.horizontalCard} onPress={onPress} activeOpacity={0.7}>
         <Image source={{ uri: product.thumbnail || 'https://via.placeholder.com/120' }} style={styles.horizontalImage} />
         <View style={styles.horizontalInfo}>
-          <Text style={styles.brand} numberOfLines={1}>{product.brand}</Text>
+          {product.brand && <Text style={styles.brand} numberOfLines={1}>{product.brand}</Text>}
           <Text style={styles.title} numberOfLines={2}>{product.title}</Text>
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{product.bestPrice?.toLocaleString('tr-TR')} TL</Text>
-            {bestOriginalPrice && (
-              <Text style={styles.originalPrice}>{bestOriginalPrice.toLocaleString('tr-TR')} TL</Text>
+            <Text style={styles.price}>{product.price?.toLocaleString('tr-TR')} TL</Text>
+            {product.originalPrice && (
+              <Text style={styles.originalPrice}>{product.originalPrice.toLocaleString('tr-TR')} TL</Text>
             )}
           </View>
-          <View style={styles.metaRow}>
-            <View style={styles.platformCount}>
-              <Ionicons name="storefront-outline" size={12} color={COLORS.textSecondary} />
-              <Text style={styles.metaText}>{product.prices?.length || 0} platform</Text>
-            </View>
+          <View style={styles.bottomRow}>
+            {product.platform && (
+              <View style={[styles.platformBadge, { backgroundColor: product.platform.color || '#666' }]}>
+                <Text style={styles.platformText}>{product.platform.name}</Text>
+              </View>
+            )}
             {discountPercent && (
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>%{discountPercent}</Text>
@@ -50,19 +45,19 @@ export default function ProductCard({ product, onPress, horizontal = false }) {
         </View>
       )}
       <Image source={{ uri: product.thumbnail || 'https://via.placeholder.com/150' }} style={styles.image} />
+      {/* Platform logo badge */}
+      {product.platform && (
+        <View style={[styles.platformCorner, { backgroundColor: product.platform.color || '#666' }]}>
+          <Text style={styles.platformInitial}>{product.platform.name?.charAt(0)}</Text>
+        </View>
+      )}
       <View style={styles.info}>
         {product.brand && <Text style={styles.brand} numberOfLines={1}>{product.brand}</Text>}
         <Text style={styles.title} numberOfLines={2}>{product.title}</Text>
-        <View style={styles.priceRow}>
-          <Text style={styles.price}>{product.bestPrice?.toLocaleString('tr-TR')} TL</Text>
-        </View>
-        {bestOriginalPrice && (
-          <Text style={styles.originalPrice}>{bestOriginalPrice.toLocaleString('tr-TR')} TL</Text>
+        <Text style={styles.price}>{product.price?.toLocaleString('tr-TR')} TL</Text>
+        {product.originalPrice && (
+          <Text style={styles.originalPrice}>{product.originalPrice.toLocaleString('tr-TR')} TL</Text>
         )}
-        <View style={styles.platformCount}>
-          <Ionicons name="storefront-outline" size={12} color={COLORS.textSecondary} />
-          <Text style={styles.metaText}>{product.prices?.length || 0} platform</Text>
-        </View>
       </View>
     </TouchableOpacity>
   );
@@ -114,15 +109,37 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     textDecorationLine: 'line-through',
   },
-  platformCount: {
+  bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 6,
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  metaText: {
-    fontSize: SIZES.xs,
-    color: COLORS.textSecondary,
+  platformBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  platformText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  platformCorner: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  platformInitial: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '800',
   },
   discountTag: {
     position: 'absolute',
@@ -168,11 +185,5 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     justifyContent: 'center',
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 6,
   },
 });

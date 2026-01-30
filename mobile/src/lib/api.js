@@ -12,8 +12,8 @@ export default api;
 // Products
 export const getProducts = (params) => api.get('/products', { params });
 export const getProduct = (id) => api.get(`/products/${id}`);
-export const trackClick = (productId, platformId) =>
-  api.post(`/products/${productId}/click`, { platformId });
+export const trackClick = (productId) =>
+  api.post(`/products/${productId}/click`);
 
 // Categories
 export const getCategories = (params) => api.get('/categories', { params });
@@ -23,3 +23,6 @@ export const getPlatforms = () => api.get('/platforms');
 
 // Campaigns
 export const getCampaigns = () => api.get('/campaigns');
+
+// Banners
+export const getBanners = () => api.get('/banners');

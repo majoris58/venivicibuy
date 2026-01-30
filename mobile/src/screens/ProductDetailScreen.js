@@ -19,15 +19,13 @@ export default function ProductDetailScreen({ route, navigation }) {
       .finally(() => setLoading(false));
   }, [productId]);
 
-  const handlePlatformClick = async (priceEntry) => {
+  const handleBuy = async () => {
     try {
-      const res = await trackClick(productId, priceEntry.platform._id || priceEntry.platform);
+      const res = await trackClick(productId);
       const url = res.data.url;
-      if (url) {
-        await Linking.openURL(url);
-      }
+      if (url) await Linking.openURL(url);
     } catch {
-      const fallbackUrl = priceEntry.affiliateUrl || priceEntry.url;
+      const fallbackUrl = product.affiliateUrl || product.url;
       if (fallbackUrl) await Linking.openURL(fallbackUrl);
     }
   };
@@ -38,7 +36,9 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   if (!product) return null;
 
-  const sortedPrices = [...(product.prices || [])].sort((a, b) => a.price - b.price);
+  const discountPercent = product.originalPrice && product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : null;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -58,10 +58,9 @@ export default function ProductDetailScreen({ route, navigation }) {
             source={{ uri: product.thumbnail || 'https://via.placeholder.com/400' }}
             style={styles.image}
           />
-          {product.isFeatured && (
-            <View style={styles.featuredBadge}>
-              <Ionicons name="star" size={12} color="#fff" />
-              <Text style={styles.featuredText}>One Cikan</Text>
+          {discountPercent && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>%{discountPercent} indirim</Text>
             </View>
           )}
         </View>
@@ -71,85 +70,37 @@ export default function ProductDetailScreen({ route, navigation }) {
           {product.brand && <Text style={styles.brand}>{product.brand}</Text>}
           <Text style={styles.title}>{product.title}</Text>
 
-          {product.category && (
-            <View style={styles.categoryTag}>
-              <Ionicons name="pricetag-outline" size={12} color={COLORS.primary} />
-              <Text style={styles.categoryText}>{product.category.name}</Text>
-            </View>
-          )}
+          <View style={styles.metaRow}>
+            {product.category && (
+              <View style={styles.categoryTag}>
+                <Ionicons name="pricetag-outline" size={12} color={COLORS.primary} />
+                <Text style={styles.categoryText}>{product.category.name}</Text>
+              </View>
+            )}
+            {product.platform && (
+              <View style={[styles.platformTag, { backgroundColor: product.platform.color || '#666' }]}>
+                <Text style={styles.platformTagText}>{product.platform.name}</Text>
+              </View>
+            )}
+          </View>
 
-          {product.bestPrice && (
-            <View style={styles.bestPriceRow}>
-              <Text style={styles.bestPriceLabel}>En iyi fiyat</Text>
-              <Text style={styles.bestPrice}>{product.bestPrice.toLocaleString('tr-TR')} TL</Text>
+          {/* Price */}
+          <View style={styles.priceSection}>
+            <View>
+              <Text style={styles.priceLabel}>Fiyat</Text>
+              <Text style={styles.price}>{product.price?.toLocaleString('tr-TR')} TL</Text>
             </View>
-          )}
+            {product.originalPrice && (
+              <View>
+                <Text style={styles.originalLabel}>Eski Fiyat</Text>
+                <Text style={styles.originalPrice}>{product.originalPrice.toLocaleString('tr-TR')} TL</Text>
+              </View>
+            )}
+          </View>
 
           {product.description && (
             <Text style={styles.description}>{product.description}</Text>
           )}
-        </View>
-
-        {/* Platform Prices */}
-        <View style={styles.pricesSection}>
-          <Text style={styles.pricesSectionTitle}>Fiyat Karsilastirmasi</Text>
-          <Text style={styles.pricesSub}>{sortedPrices.length} platformda mevcut</Text>
-
-          {sortedPrices.map((entry, index) => {
-            const isBest = index === 0;
-            const discount = entry.originalPrice
-              ? Math.round(((entry.originalPrice - entry.price) / entry.originalPrice) * 100)
-              : null;
-
-            return (
-              <TouchableOpacity
-                key={entry._id || index}
-                style={[styles.priceCard, isBest && styles.priceCardBest]}
-                onPress={() => handlePlatformClick(entry)}
-                activeOpacity={0.7}
-              >
-                {isBest && (
-                  <View style={styles.bestTag}>
-                    <Text style={styles.bestTagText}>EN UYGUN</Text>
-                  </View>
-                )}
-                <View style={styles.priceCardLeft}>
-                  <View
-                    style={[styles.platformDot, { backgroundColor: entry.platform?.color || '#666' }]}
-                  >
-                    <Text style={styles.platformInitial}>
-                      {(entry.platform?.name || 'P').charAt(0)}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text style={styles.platformName}>{entry.platform?.name || 'Platform'}</Text>
-                    <View style={styles.stockRow}>
-                      <View style={[styles.stockDot, { backgroundColor: entry.inStock ? COLORS.success : COLORS.error }]} />
-                      <Text style={[styles.stockText, { color: entry.inStock ? COLORS.success : COLORS.error }]}>
-                        {entry.inStock ? 'Stokta' : 'Tukendi'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                <View style={styles.priceCardRight}>
-                  <Text style={[styles.platformPrice, isBest && styles.platformPriceBest]}>
-                    {entry.price.toLocaleString('tr-TR')} TL
-                  </Text>
-                  {entry.originalPrice && (
-                    <Text style={styles.platformOriginal}>
-                      {entry.originalPrice.toLocaleString('tr-TR')} TL
-                    </Text>
-                  )}
-                  {discount && (
-                    <View style={styles.platformDiscount}>
-                      <Text style={styles.platformDiscountText}>%{discount}</Text>
-                    </View>
-                  )}
-                </View>
-                <Ionicons name="open-outline" size={16} color={COLORS.textLight} style={{ marginLeft: 8 }} />
-              </TouchableOpacity>
-            );
-          })}
         </View>
 
         {/* Tags */}
@@ -163,8 +114,25 @@ export default function ProductDetailScreen({ route, navigation }) {
           </View>
         )}
 
-        <View style={{ height: 30 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Sticky Buy Button */}
+      <View style={styles.buyBar}>
+        <View style={styles.buyBarLeft}>
+          <Text style={styles.buyBarPrice}>{product.price?.toLocaleString('tr-TR')} TL</Text>
+          {product.platform && (
+            <View style={styles.buyBarPlatformRow}>
+              <View style={[styles.buyBarDot, { backgroundColor: product.platform.color || '#666' }]} />
+              <Text style={styles.buyBarPlatform}>{product.platform.name}</Text>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity style={styles.buyButton} onPress={handleBuy} activeOpacity={0.8}>
+          <Ionicons name="cart-outline" size={18} color="#fff" />
+          <Text style={styles.buyButtonText}>Satin Al</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -181,59 +149,53 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: SIZES.lg, fontWeight: '700', color: COLORS.text, flex: 1, textAlign: 'center' },
   imageContainer: { backgroundColor: COLORS.surface, alignItems: 'center', paddingVertical: 20 },
   image: { width: '80%', height: 250, resizeMode: 'contain' },
-  featuredBadge: {
-    position: 'absolute', top: 12, left: 12,
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.warning, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+  discountBadge: {
+    position: 'absolute', top: 12, right: 12,
+    backgroundColor: COLORS.discount, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
   },
-  featuredText: { color: '#fff', fontSize: SIZES.xs, fontWeight: '700' },
+  discountText: { color: '#fff', fontSize: SIZES.sm, fontWeight: '700' },
   infoSection: { padding: SIZES.padding, backgroundColor: COLORS.surface, marginBottom: 8 },
   brand: { fontSize: SIZES.sm, color: COLORS.textSecondary, fontWeight: '600', textTransform: 'uppercase', marginBottom: 4 },
   title: { fontSize: SIZES.xl, fontWeight: '700', color: COLORS.text, lineHeight: 28 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   categoryTag: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.primaryLight, alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginTop: 10,
+    backgroundColor: COLORS.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
   },
   categoryText: { fontSize: SIZES.xs, color: COLORS.primary, fontWeight: '600' },
-  bestPriceRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  platformTag: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+  },
+  platformTagText: { color: '#fff', fontSize: SIZES.xs, fontWeight: '600' },
+  priceSection: {
+    flexDirection: 'row', alignItems: 'flex-end', gap: 20,
     marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLORS.border,
   },
-  bestPriceLabel: { fontSize: SIZES.md, color: COLORS.textSecondary, fontWeight: '500' },
-  bestPrice: { fontSize: SIZES.xxl, fontWeight: '800', color: COLORS.primary },
-  description: { fontSize: SIZES.md, color: COLORS.textSecondary, lineHeight: 22, marginTop: 12 },
-  pricesSection: { padding: SIZES.padding, backgroundColor: COLORS.surface, marginBottom: 8 },
-  pricesSectionTitle: { fontSize: SIZES.lg, fontWeight: '700', color: COLORS.text },
-  pricesSub: { fontSize: SIZES.sm, color: COLORS.textSecondary, marginTop: 2, marginBottom: 16 },
-  priceCard: {
-    flexDirection: 'row', alignItems: 'center',
-    padding: 14, borderRadius: SIZES.radiusSm, marginBottom: 10,
-    backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border,
-  },
-  priceCardBest: { borderColor: COLORS.primary, backgroundColor: '#eff6ff' },
-  bestTag: {
-    position: 'absolute', top: -8, left: 12,
-    backgroundColor: COLORS.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4,
-  },
-  bestTagText: { color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
-  priceCardLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  platformDot: {
-    width: 40, height: 40, borderRadius: 20,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  platformInitial: { color: '#fff', fontSize: SIZES.base, fontWeight: '700' },
-  platformName: { fontSize: SIZES.md, fontWeight: '600', color: COLORS.text },
-  stockRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  stockDot: { width: 6, height: 6, borderRadius: 3 },
-  stockText: { fontSize: SIZES.xs, fontWeight: '500' },
-  priceCardRight: { alignItems: 'flex-end' },
-  platformPrice: { fontSize: SIZES.lg, fontWeight: '700', color: COLORS.text },
-  platformPriceBest: { color: COLORS.primary },
-  platformOriginal: { fontSize: SIZES.xs, color: COLORS.textLight, textDecorationLine: 'line-through', marginTop: 2 },
-  platformDiscount: { backgroundColor: '#fef2f2', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4, marginTop: 2 },
-  platformDiscountText: { color: COLORS.discount, fontSize: 10, fontWeight: '700' },
+  priceLabel: { fontSize: SIZES.xs, color: COLORS.textSecondary, marginBottom: 2 },
+  price: { fontSize: SIZES.xxxl, fontWeight: '800', color: COLORS.primary },
+  originalLabel: { fontSize: SIZES.xs, color: COLORS.textLight, marginBottom: 2 },
+  originalPrice: { fontSize: SIZES.lg, color: COLORS.textLight, textDecorationLine: 'line-through' },
+  description: { fontSize: SIZES.md, color: COLORS.textSecondary, lineHeight: 22, marginTop: 16 },
   tagsSection: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: SIZES.padding },
   tag: { backgroundColor: COLORS.surface, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border },
   tagText: { fontSize: SIZES.sm, color: COLORS.textSecondary },
+  // Buy bar
+  buyBar: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: 16, paddingBottom: 24,
+    backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border,
+    ...SHADOWS.lg,
+  },
+  buyBarLeft: {},
+  buyBarPrice: { fontSize: SIZES.xl, fontWeight: '800', color: COLORS.text },
+  buyBarPlatformRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  buyBarDot: { width: 8, height: 8, borderRadius: 4 },
+  buyBarPlatform: { fontSize: SIZES.xs, color: COLORS.textSecondary, fontWeight: '500' },
+  buyButton: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: COLORS.primary, paddingHorizontal: 28, paddingVertical: 14,
+    borderRadius: SIZES.radius,
+  },
+  buyButtonText: { color: '#fff', fontSize: SIZES.base, fontWeight: '700' },
 });
