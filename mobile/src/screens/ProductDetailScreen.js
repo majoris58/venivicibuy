@@ -129,8 +129,8 @@ export default function ProductDetailScreen({ route, navigation }) {
           )}
         </View>
         <TouchableOpacity style={styles.buyButton} onPress={handleBuy} activeOpacity={0.8}>
-          <Ionicons name="cart-outline" size={18} color="#fff" />
-          <Text style={styles.buyButtonText}>Satin Al</Text>
+          <Ionicons name="open-outline" size={18} color="#fff" />
+          <Text style={styles.buyButtonText}>Incele</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
