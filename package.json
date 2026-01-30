@@ -1,0 +1,17 @@
+{
+  "name": "venivicibuy",
+  "version": "1.0.0",
+  "description": "Price comparison platform for Turkish e-commerce sites",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "admin",
+    "mobile"
+  ],
+  "scripts": {
+    "backend": "npm run dev --workspace=backend",
+    "admin": "npm run dev --workspace=admin",
+    "mobile": "npm run start --workspace=mobile",
+    "install:all": "npm install"
+  }
+}
