@@ -10,6 +10,7 @@ const platformRoutes = require('./routes/platforms');
 const campaignRoutes = require('./routes/campaigns');
 const statsRoutes = require('./routes/stats');
 const bannerRoutes = require('./routes/banners');
+const trendyolRoutes = require('./routes/trendyol');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,6 +27,7 @@ app.use('/api/platforms', platformRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/trendyol', trendyolRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
