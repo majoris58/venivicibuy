@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, Package, Star, Flame } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Package, Star, Flame, BarChart3, MousePointerClick, Eye } from 'lucide-react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 
@@ -83,6 +83,8 @@ export default function ProductsPage() {
                     <th className="text-left py-3 px-4 font-medium text-gray-500">Kategori</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-500">Fiyat</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-500">Platform</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">Tıklama</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-500">Görüntülenme</th>
                     <th className="text-center py-3 px-4 font-medium text-gray-500">Etiketler</th>
                     <th className="text-center py-3 px-4 font-medium text-gray-500">Durum</th>
                     <th className="text-right py-3 px-4 font-medium text-gray-500">İşlemler</th>
@@ -119,6 +121,18 @@ export default function ProductsPage() {
                         )}
                       </td>
                       <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1 text-gray-600">
+                          <MousePointerClick className="w-3.5 h-3.5" />
+                          <span className="font-medium">{product.clickCount || 0}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1 text-gray-600">
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="font-medium">{product.viewCount || 0}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-1">
                           {product.isFeatured && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" title="Öne Çıkan" />}
                           {product.isDealOfDay && <Flame className="w-4 h-4 text-red-500" title="Günün Fırsatı" />}
@@ -131,6 +145,9 @@ export default function ProductsPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-2">
+                          <Link to={`/products/${product._id}/stats`} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-500 hover:text-blue-600" title="İstatistikler">
+                            <BarChart3 className="w-4 h-4" />
+                          </Link>
                           <Link to={`/products/${product._id}/edit`} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-primary-600">
                             <Edit2 className="w-4 h-4" />
                           </Link>
