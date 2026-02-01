@@ -30,3 +30,9 @@ export const getBanners = () => api.get('/banners');
 // Trendyol
 export const getTrendyolProductData = (productId) =>
   api.get(`/trendyol/product/${productId}`);
+
+// Deal Rating
+export const getDealRating = (productId, fingerprint) =>
+  api.get(`/products/${productId}/deal-rating`, { params: { fingerprint } });
+export const submitDealRating = (productId, rating, fingerprint) =>
+  api.post(`/products/${productId}/deal-rating`, { rating, fingerprint });

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, MousePointerClick, Eye, TrendingUp, Users,
-  Clock, ExternalLink, RefreshCw, Calendar,
+  Clock, ExternalLink, RefreshCw, Calendar, Gauge,
 } from 'lucide-react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
@@ -13,12 +13,17 @@ export default function ProductStatsPage() {
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
   const [data, setData] = useState(null);
+  const [dealRating, setDealRating] = useState(null);
 
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/stats/product/${id}/clicks`, { params: { days } });
-      setData(res.data);
+      const [statsRes, ratingRes] = await Promise.all([
+        api.get(`/stats/product/${id}/clicks`, { params: { days } }),
+        api.get(`/products/${id}/deal-rating`).catch(() => ({ data: null })),
+      ]);
+      setData(statsRes.data);
+      setDealRating(ratingRes.data);
     } catch {
       toast.error('İstatistikler yüklenemedi');
     } finally {
@@ -27,6 +32,20 @@ export default function ProductStatsPage() {
   };
 
   useEffect(() => { fetchStats(); }, [id, days]);
+
+  const getDealRatingColor = (rating) => {
+    if (rating >= 75) return '#22c55e';
+    if (rating >= 50) return '#84cc16';
+    if (rating >= 25) return '#f59e0b';
+    return '#ef4444';
+  };
+
+  const getDealRatingLabel = (rating) => {
+    if (rating >= 75) return 'Çok Avantajlı';
+    if (rating >= 50) return 'Avantajlı';
+    if (rating >= 25) return 'Orta';
+    return 'Düşük';
+  };
 
   if (loading) {
     return (
@@ -148,6 +167,51 @@ export default function ProductStatsPage() {
           </div>
         </div>
       </div>
+
+      {/* Deal Rating */}
+      {dealRating && dealRating.totalVotes > 0 && (
+        <div className="card mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Gauge className="w-5 h-5 text-gray-400" /> Fırsat Değerlendirmesi
+            </h3>
+            <span className="text-sm text-gray-500">{dealRating.totalVotes} oy</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-center">
+              <div
+                className="text-4xl font-black"
+                style={{ color: getDealRatingColor(dealRating.averageRating) }}
+              >
+                {dealRating.averageRating}
+              </div>
+              <div
+                className="text-xs font-semibold mt-1"
+                style={{ color: getDealRatingColor(dealRating.averageRating) }}
+              >
+                {getDealRatingLabel(dealRating.averageRating)}
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${dealRating.averageRating}%`,
+                    background: `linear-gradient(90deg, #ef4444 0%, #f59e0b 33%, #84cc16 66%, #22c55e 100%)`,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px] text-gray-400">Düşük</span>
+                <span className="text-[10px] text-gray-400">Orta</span>
+                <span className="text-[10px] text-gray-400">Avantajlı</span>
+                <span className="text-[10px] text-gray-400">Süper</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hızlı İstatistikler */}
       <div className="grid grid-cols-2 gap-4 mb-6">
