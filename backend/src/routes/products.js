@@ -1,6 +1,7 @@
 const express = require('express');
 const Product = require('../models/Product');
 const ClickLog = require('../models/ClickLog');
+const DealRating = require('../models/DealRating');
 const { authMiddleware } = require('../middleware/auth');
 const { getTrendyolProduct, extractContentId } = require('../services/trendyol');
 
@@ -87,6 +88,106 @@ router.post('/:id/click', async (req, res) => {
 
     const redirectUrl = product.affiliateUrl || product.url;
     res.json({ url: redirectUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Public: ürünün deal rating'ini getir
+router.get('/:id/deal-rating', async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const fingerprint = req.query.fingerprint;
+
+    const agg = await DealRating.aggregate([
+      { $match: { product: require('mongoose').Types.ObjectId.createFromHexString(productId) } },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: '$rating' },
+          totalVotes: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const result = agg[0] || { averageRating: 0, totalVotes: 0 };
+
+    // Kullanıcının kendi oy'u
+    let userRating = null;
+    if (fingerprint) {
+      const existing = await DealRating.findOne({ product: productId, fingerprint });
+      if (existing) userRating = existing.rating;
+    }
+
+    // Rating dağılımı (0-25 kötü, 25-50 orta, 50-75 iyi, 75-100 süper)
+    const distribution = await DealRating.aggregate([
+      { $match: { product: require('mongoose').Types.ObjectId.createFromHexString(productId) } },
+      {
+        $bucket: {
+          groupBy: '$rating',
+          boundaries: [0, 26, 51, 76, 101],
+          default: 'other',
+          output: { count: { $sum: 1 } },
+        },
+      },
+    ]);
+
+    res.json({
+      averageRating: Math.round(result.averageRating || 0),
+      totalVotes: result.totalVotes,
+      userRating,
+      distribution,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Public: deal rating oyu ver (veya güncelle)
+router.post('/:id/deal-rating', async (req, res) => {
+  try {
+    const { rating, fingerprint } = req.body;
+
+    if (rating === undefined || rating === null || !fingerprint) {
+      return res.status(400).json({ error: 'rating ve fingerprint gerekli' });
+    }
+    if (rating < 0 || rating > 100) {
+      return res.status(400).json({ error: 'rating 0-100 arasında olmalı' });
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Ürün bulunamadı' });
+
+    // Upsert: varsa güncelle, yoksa oluştur
+    await DealRating.findOneAndUpdate(
+      { product: product._id, fingerprint },
+      {
+        rating: Math.round(rating),
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      },
+      { upsert: true, new: true }
+    );
+
+    // Güncel ortalamaları hesapla
+    const agg = await DealRating.aggregate([
+      { $match: { product: product._id } },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: '$rating' },
+          totalVotes: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const result = agg[0] || { averageRating: 0, totalVotes: 0 };
+
+    res.json({
+      averageRating: Math.round(result.averageRating),
+      totalVotes: result.totalVotes,
+      userRating: Math.round(rating),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
