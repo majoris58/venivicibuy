@@ -10,6 +10,7 @@ import PlatformsPage from './pages/PlatformsPage';
 import CampaignsPage from './pages/CampaignsPage';
 import BannersPage from './pages/BannersPage';
 import ProductStatsPage from './pages/ProductStatsPage';
+import SheetSyncPage from './pages/SheetSyncPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="platforms" element={<PlatformsPage />} />
         <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="banners" element={<BannersPage />} />
+        <Route path="sheet-sync" element={<SheetSyncPage />} />
       </Route>
     </Routes>
   );

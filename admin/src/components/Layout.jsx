@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  LayoutDashboard, Package, FolderTree, Globe, Megaphone, LogOut, Menu, X, ShoppingBag, Image
+  LayoutDashboard, Package, FolderTree, Globe, Megaphone, LogOut, Menu, X, ShoppingBag, Image, FileSpreadsheet
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/platforms', icon: Globe, label: 'Platformlar' },
   { to: '/banners', icon: Image, label: 'Bannerlar' },
   { to: '/campaigns', icon: Megaphone, label: 'Kampanyalar' },
+  { to: '/sheet-sync', icon: FileSpreadsheet, label: 'Sheet Sync' },
 ];
 
 export default function Layout() {
