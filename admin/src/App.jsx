@@ -9,6 +9,7 @@ import CategoriesPage from './pages/CategoriesPage';
 import PlatformsPage from './pages/PlatformsPage';
 import CampaignsPage from './pages/CampaignsPage';
 import BannersPage from './pages/BannersPage';
+import ProductStatsPage from './pages/ProductStatsPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/new" element={<ProductFormPage />} />
         <Route path="products/:id/edit" element={<ProductFormPage />} />
+        <Route path="products/:id/stats" element={<ProductStatsPage />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="platforms" element={<PlatformsPage />} />
         <Route path="campaigns" element={<CampaignsPage />} />

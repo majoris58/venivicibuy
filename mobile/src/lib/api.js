@@ -26,3 +26,7 @@ export const getCampaigns = () => api.get('/campaigns');
 
 // Banners
 export const getBanners = () => api.get('/banners');
+
+// Trendyol
+export const getTrendyolProductData = (productId) =>
+  api.get(`/trendyol/product/${productId}`);

@@ -21,6 +21,31 @@ const productSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   viewCount: { type: Number, default: 0 },
   clickCount: { type: Number, default: 0 },
+
+  // Trendyol entegrasyonu
+  trendyolContentId: { type: String, index: true },
+  trendyolData: {
+    name: String,
+    brand: String,
+    categoryName: String,
+    description: String,
+    images: [String],
+    thumbnail: String,
+    price: {
+      sellingPrice: Number,
+      originalPrice: Number,
+      discountedPrice: Number,
+    },
+    rating: {
+      averageRating: Number,
+      totalRatingCount: Number,
+      totalCommentCount: Number,
+    },
+    favoriteCount: Number,
+    seller: String,
+    url: String,
+    fetchedAt: Date,
+  },
 }, { timestamps: true });
 
 productSchema.pre('save', function (next) {

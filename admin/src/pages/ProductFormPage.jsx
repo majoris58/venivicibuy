@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Download, RefreshCw, ExternalLink, Star } from 'lucide-react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 
@@ -12,10 +12,13 @@ export default function ProductFormPage() {
   const [categories, setCategories] = useState([]);
   const [platforms, setPlatforms] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [fetchingTrendyol, setFetchingTrendyol] = useState(false);
+  const [trendyolUrl, setTrendyolUrl] = useState('');
+  const [trendyolPreview, setTrendyolPreview] = useState(null);
   const [form, setForm] = useState({
     title: '', description: '', brand: '', category: '', platform: '',
     price: '', originalPrice: '', url: '', affiliateUrl: '',
-    thumbnail: '', tags: '',
+    thumbnail: '', tags: '', trendyolContentId: '',
     isFeatured: false, isDealOfDay: false, isActive: true,
   });
 
@@ -38,15 +41,70 @@ export default function ProductFormPage() {
           url: p.url || '', affiliateUrl: p.affiliateUrl || '',
           thumbnail: p.thumbnail || '',
           tags: (p.tags || []).join(', '),
+          trendyolContentId: p.trendyolContentId || '',
           isFeatured: p.isFeatured || false,
           isDealOfDay: p.isDealOfDay || false,
           isActive: p.isActive !== false,
         });
+        if (p.trendyolData) setTrendyolPreview(p.trendyolData);
       });
     }
   }, [id]);
 
   const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleFetchTrendyol = async () => {
+    if (!trendyolUrl.trim()) {
+      toast.error('Trendyol URL veya Content ID giriniz');
+      return;
+    }
+    setFetchingTrendyol(true);
+    try {
+      const res = await api.post('/trendyol/fetch', { trendyolUrl: trendyolUrl.trim() });
+      const data = res.data;
+      setTrendyolPreview(data);
+
+      // Formu Trendyol verileriyle doldur
+      setForm((prev) => ({
+        ...prev,
+        title: data.name || prev.title,
+        brand: data.brand || prev.brand,
+        description: data.description || prev.description,
+        thumbnail: data.thumbnail || prev.thumbnail,
+        price: data.price?.discountedPrice || data.price?.sellingPrice || prev.price,
+        originalPrice: data.price?.originalPrice || prev.originalPrice,
+        url: data.url || prev.url,
+        trendyolContentId: String(data.contentId) || prev.trendyolContentId,
+      }));
+
+      toast.success('Trendyol ürün bilgileri çekildi');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Trendyol verisi çekilemedi');
+    } finally {
+      setFetchingTrendyol(false);
+    }
+  };
+
+  const handleRefreshTrendyol = async () => {
+    if (!isEdit) return;
+    setFetchingTrendyol(true);
+    try {
+      const res = await api.post(`/trendyol/refresh/${id}`);
+      const p = res.data;
+      setForm((prev) => ({
+        ...prev,
+        price: p.price || prev.price,
+        originalPrice: p.originalPrice || prev.originalPrice,
+        thumbnail: p.thumbnail || prev.thumbnail,
+      }));
+      if (p.trendyolData) setTrendyolPreview(p.trendyolData);
+      toast.success('Trendyol verileri güncellendi');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Güncelleme başarısız');
+    } finally {
+      setFetchingTrendyol(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,6 +115,7 @@ export default function ProductFormPage() {
         price: Number(form.price),
         originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+        trendyolContentId: form.trendyolContentId || undefined,
       };
 
       if (isEdit) {
@@ -84,6 +143,89 @@ export default function ProductFormPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Trendyol Import */}
+        <div className="card">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Trendyol Ürün İçe Aktarma</h2>
+          <p className="text-sm text-gray-500 mb-4">Trendyol ürün linkini veya Content ID girerek ürün bilgilerini otomatik doldurun.</p>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={trendyolUrl}
+              onChange={(e) => setTrendyolUrl(e.target.value)}
+              className="input flex-1"
+              placeholder="https://www.trendyol.com/marka/urun-p-123456 veya 123456"
+            />
+            <button
+              type="button"
+              onClick={handleFetchTrendyol}
+              disabled={fetchingTrendyol}
+              className="btn-primary flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              {fetchingTrendyol ? 'Çekiliyor...' : 'Verileri Çek'}
+            </button>
+            {isEdit && form.trendyolContentId && (
+              <button
+                type="button"
+                onClick={handleRefreshTrendyol}
+                disabled={fetchingTrendyol}
+                className="btn-secondary flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Yenile
+              </button>
+            )}
+          </div>
+          {form.trendyolContentId && (
+            <div className="mt-2 text-xs text-gray-400">Content ID: {form.trendyolContentId}</div>
+          )}
+
+          {/* Trendyol Preview */}
+          {trendyolPreview && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex gap-4">
+                {trendyolPreview.thumbnail && (
+                  <img src={trendyolPreview.thumbnail} alt="" className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-gray-900 truncate">{trendyolPreview.name}</h4>
+                  <p className="text-xs text-gray-500 mt-1">{trendyolPreview.brand} • {trendyolPreview.seller}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-sm font-bold text-green-600">
+                      {(trendyolPreview.price?.discountedPrice || trendyolPreview.price?.sellingPrice || 0).toLocaleString('tr-TR')} TL
+                    </span>
+                    {trendyolPreview.price?.originalPrice > (trendyolPreview.price?.discountedPrice || 0) && (
+                      <span className="text-xs text-gray-400 line-through">
+                        {trendyolPreview.price.originalPrice.toLocaleString('tr-TR')} TL
+                      </span>
+                    )}
+                  </div>
+                  {trendyolPreview.rating && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs text-gray-500">
+                        {trendyolPreview.rating.averageRating?.toFixed(1)} ({trendyolPreview.rating.totalCommentCount} yorum)
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {trendyolPreview.images?.length > 1 && (
+                <div className="flex gap-2 mt-3 overflow-x-auto">
+                  {trendyolPreview.images.slice(0, 6).map((img, i) => (
+                    <img key={i} src={img} alt="" className="w-12 h-12 object-cover rounded flex-shrink-0" />
+                  ))}
+                  {trendyolPreview.images.length > 6 && (
+                    <div className="w-12 h-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0 text-xs text-gray-500">
+                      +{trendyolPreview.images.length - 6}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Basic Info */}
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Temel Bilgiler</h2>

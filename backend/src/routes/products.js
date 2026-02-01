@@ -2,6 +2,7 @@ const express = require('express');
 const Product = require('../models/Product');
 const ClickLog = require('../models/ClickLog');
 const { authMiddleware } = require('../middleware/auth');
+const { getTrendyolProduct, extractContentId } = require('../services/trendyol');
 
 const router = express.Router();
 
@@ -121,7 +122,33 @@ router.get('/admin/all', authMiddleware, async (req, res) => {
 // Admin: create product
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const product = new Product(req.body);
+    const data = { ...req.body };
+
+    // Trendyol URL verilmişse contentId çıkar ve verileri çek
+    if (data.trendyolUrl || data.trendyolContentId) {
+      const contentId = data.trendyolContentId || extractContentId(data.trendyolUrl);
+      if (contentId) {
+        data.trendyolContentId = contentId;
+        try {
+          const trendyolData = await getTrendyolProduct(contentId);
+          data.trendyolData = trendyolData;
+          // Trendyol'dan gelen verilerle otomatik doldur (admin override etmediyse)
+          if (!data.title) data.title = trendyolData.name;
+          if (!data.brand) data.brand = trendyolData.brand;
+          if (!data.description) data.description = trendyolData.description;
+          if (!data.thumbnail) data.thumbnail = trendyolData.thumbnail;
+          if (!data.images || data.images.length === 0) data.images = trendyolData.images;
+          if (!data.price) data.price = trendyolData.price.discountedPrice || trendyolData.price.sellingPrice;
+          if (!data.originalPrice) data.originalPrice = trendyolData.price.originalPrice;
+          if (!data.url) data.url = trendyolData.url;
+        } catch (fetchErr) {
+          console.error('Trendyol veri çekme hatası:', fetchErr.message);
+        }
+      }
+      delete data.trendyolUrl;
+    }
+
+    const product = new Product(data);
     await product.save();
     const populated = await Product.findById(product._id)
       .populate('category', 'name slug')

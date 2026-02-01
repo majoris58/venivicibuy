@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VeniViciBuy - Mobil Önizleme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #2563eb; --primary-dark: #1e40af; --primary-light: #dbeafe;
+      --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      --background: #f8fafc; --surface: #ffffff; --text: #0f172a;
+      --text-secondary: #475569; --text-light: #94a3b8; --border: #e2e8f0;
+      --border-light: #f1f5f9; --discount: #dc2626; --success: #10b981;
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08); --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+      --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #312e81 50%, #4c1d95 100%);
+      min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 24px;
+    }
+    .preview-container { display: flex; gap: 48px; align-items: center; }
+    .phone-frame {
+      width: 375px; height: 812px; background: var(--background); border-radius: 54px;
+      overflow: hidden; position: relative;
+      box-shadow: 0 0 0 12px #1a1a1a, 0 0 0 14px #333, 0 50px 100px -20px rgba(0,0,0,0.5);
+    }
+    .phone-frame::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 150px; height: 34px; background: #1a1a1a; border-radius: 0 0 24px 24px; z-index: 1000;
+    }
+    .phone-frame::after {
+      content: ''; position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 80px; height: 8px; background: #333; border-radius: 4px; z-index: 1001;
+    }
+    .phone-content { height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+    .safe-area-top { height: 48px; background: var(--surface); flex-shrink: 0; }
+    .main-content { flex: 1; overflow-y: auto; overflow-x: hidden; background: var(--background); scroll-behavior: smooth; }
+    .main-content::-webkit-scrollbar { display: none; }
+
+    .tab-bar { display: flex; background: var(--surface); border-top: 1px solid var(--border-light); padding: 6px 8px 28px; flex-shrink: 0; gap: 4px; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 8px 4px; border-radius: var(--radius-md); transition: all 0.2s; }
+    .tab-item:hover { background: var(--border-light); }
+    .tab-item svg { width: 24px; height: 24px; stroke: var(--text-light); fill: none; stroke-width: 1.8; transition: all 0.2s; }
+    .tab-item.active { background: var(--primary-light); }
+    .tab-item.active svg { stroke: var(--primary); }
+    .tab-item span { font-size: 10px; font-weight: 600; color: var(--text-light); transition: all 0.2s; }
+    .tab-item.active span { color: var(--primary); }
+
+    .header { background: var(--surface); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border-light); }
+    .header-logo { display: flex; align-items: center; gap: 10px; }
+    .header-logo-icon { width: 36px; height: 36px; background: var(--primary-gradient); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+    .header-logo-icon svg { width: 20px; height: 20px; stroke: white; fill: none; }
+    .header-title { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+    .header-subtitle { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+    .header-actions { display: flex; gap: 8px; }
+    .icon-btn { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--background); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+    .icon-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+    .icon-btn svg { width: 20px; height: 20px; stroke: var(--text-secondary); transition: all 0.2s; }
+    .icon-btn:hover svg { stroke: var(--primary); }
+
+    .hero-section { padding: 20px; background: linear-gradient(180deg, var(--surface) 0%, var(--background) 100%); }
+    .hero-banner { background: var(--primary-gradient); border-radius: var(--radius-xl); padding: 24px; position: relative; overflow: hidden; }
+    .hero-banner::before { content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .hero-banner::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 150px; height: 150px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 20px; margin-bottom: 12px; }
+    .hero-badge svg { width: 14px; height: 14px; stroke: white; }
+    .hero-badge span { font-size: 11px; font-weight: 600; color: white; }
+    .hero-title { font-size: 22px; font-weight: 800; color: white; line-height: 1.2; margin-bottom: 8px; }
+    .hero-subtitle { font-size: 13px; color: rgba(255,255,255,0.85); margin-bottom: 16px; }
+    .hero-cta { display: inline-flex; align-items: center; gap: 8px; background: white; color: var(--primary); padding: 10px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+    .hero-cta svg { width: 16px; height: 16px; stroke: var(--primary); }
+
+    .section { padding: 24px 20px; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-title { font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .section-title-icon { width: 28px; height: 28px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+    .section-title-icon svg { width: 16px; height: 16px; }
+    .section-link { font-size: 12px; font-weight: 600; color: var(--primary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .section-link svg { width: 14px; height: 14px; stroke: var(--primary); }
+
+    .categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .category-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+    .category-item:hover .category-icon { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+    .category-icon { width: 56px; height: 56px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .category-icon svg { width: 26px; height: 26px; }
+    .category-name { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-align: center; }
+
+    .products-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .products-scroll::-webkit-scrollbar { display: none; }
+    .product-skeleton { min-width: 150px; background: var(--surface); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-light); }
+    .skeleton-image { width: 100%; height: 130px; background: linear-gradient(110deg, var(--background) 8%, var(--border-light) 18%, var(--background) 33%); background-size: 200% 100%; animation: shimmer 1.5s infinite; display: flex; align-items: center; justify-content: center; }
+    .skeleton-image svg { width: 32px; height: 32px; stroke: var(--border); }
+    .skeleton-content { padding: 12px; }
+    .skeleton-line { height: 10px; background: linear-gradient(110deg, var(--background) 8%, var(--border-light) 18%, var(--background) 33%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 5px; margin-bottom: 8px; }
+    .skeleton-line.short { width: 60%; }
+    .skeleton-line.price { width: 40%; height: 14px; margin-bottom: 0; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .quick-action-card { background: var(--surface); border-radius: var(--radius-lg); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid var(--border-light); transition: all 0.2s; }
+    .quick-action-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); }
+    .quick-action-icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .quick-action-icon svg { width: 22px; height: 22px; }
+    .quick-action-text h4 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .quick-action-text p { font-size: 11px; color: var(--text-secondary); }
+
+    .platforms-section { padding: 0 20px 24px; }
+    .platforms-header { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .platforms-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .platform-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+    .platform-chip:hover { border-color: var(--primary); background: var(--primary-light); }
+    .platform-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .platform-chip span { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+    .page-header { background: var(--surface); padding: 16px 20px 20px; border-bottom: 1px solid var(--border-light); }
+    .page-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .page-subtitle { font-size: 13px; color: var(--text-secondary); }
+
+    .search-bar { padding: 16px 20px; background: var(--surface); position: sticky; top: 0; z-index: 10; }
+    .search-input-container { display: flex; gap: 10px; }
+    .search-input-wrap { flex: 1; display: flex; align-items: center; gap: 10px; background: var(--background); border: 2px solid var(--border); border-radius: var(--radius-md); padding: 0 14px; transition: all 0.2s; }
+    .search-input-wrap:focus-within { border-color: var(--primary); background: var(--surface); }
+    .search-input-wrap svg { width: 18px; height: 18px; stroke: var(--text-light); flex-shrink: 0; }
+    .search-input-wrap input { flex: 1; border: none; outline: none; padding: 12px 0; font-size: 14px; background: transparent; font-family: inherit; color: var(--text); }
+    .search-input-wrap input::placeholder { color: var(--text-light); }
+    .search-btn { background: var(--primary-gradient); color: white; border: none; padding: 0 20px; border-radius: var(--radius-md); font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .search-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+    .search-empty-state { padding: 60px 40px; text-align: center; }
+    .search-empty-state svg { width: 80px; height: 80px; stroke: var(--border); margin-bottom: 20px; }
+    .search-empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .search-empty-state p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+    .categories-page-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 20px; }
+    .category-card { background: var(--surface); border-radius: var(--radius-lg); padding: 20px 16px; display: flex; flex-direction: column; align-items: center; cursor: pointer; border: 1px solid var(--border-light); transition: all 0.2s; position: relative; }
+    .category-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .category-card-icon { width: 56px; height: 56px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+    .category-card-icon svg { width: 28px; height: 28px; }
+    .category-card-name { font-size: 13px; font-weight: 700; color: var(--text); text-align: center; }
+    .category-card-count { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+    .category-card-arrow { position: absolute; top: 12px; right: 12px; }
+    .category-card-arrow svg { width: 16px; height: 16px; stroke: var(--text-light); }
+
+    .campaigns-list { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .campaign-card { background: var(--surface); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-light); cursor: pointer; transition: all 0.2s; }
+    .campaign-card:hover { border-color: var(--primary); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .campaign-banner { height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .campaign-banner::before { content: ''; position: absolute; top: -50%; right: -30%; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .campaign-discount { font-size: 42px; font-weight: 800; color: white; position: relative; }
+    .campaign-banner-title { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); margin-top: 4px; position: relative; }
+    .campaign-body { padding: 16px; }
+    .campaign-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .campaign-platform-tag { padding: 4px 10px; border-radius: 6px; color: white; font-size: 11px; font-weight: 700; }
+    .campaign-discount-tag { background: #fef2f2; color: var(--discount); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .campaign-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .campaign-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .campaign-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-light); }
+    .campaign-date { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-light); }
+    .campaign-date svg { width: 14px; height: 14px; }
+    .campaign-cta { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--primary); }
+    .campaign-cta svg { width: 16px; height: 16px; }
+
+    /* Auth Screens */
+    .auth-screen { background: var(--surface); min-height: 100%; }
+    .auth-header { padding: 20px; display: flex; align-items: center; gap: 12px; }
+    .auth-back { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--background); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .auth-back svg { width: 20px; height: 20px; stroke: var(--text); }
+    .auth-header-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .auth-content { padding: 20px 24px; }
+    .auth-logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; }
+    .auth-logo-icon { width: 72px; height: 72px; background: var(--primary-gradient); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3); }
+    .auth-logo-icon svg { width: 36px; height: 36px; stroke: white; }
+    .auth-logo h1 { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .auth-logo p { font-size: 13px; color: var(--text-secondary); }
+    .auth-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 8px; text-align: center; }
+    .auth-subtitle { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 28px; }
+
+    .social-buttons { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .social-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 20px; border-radius: var(--radius-md); border: 2px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.2s; }
+    .social-btn:hover { border-color: var(--text-light); box-shadow: var(--shadow-md); }
+    .social-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+    .social-btn span { font-size: 14px; font-weight: 600; color: var(--text); }
+    .social-btn.google:hover { border-color: #4285f4; background: rgba(66, 133, 244, 0.05); }
+    .social-btn.apple { background: #000; border-color: #000; }
+    .social-btn.apple span { color: white; }
+    .social-btn.apple svg { fill: white; }
+    .social-btn.apple:hover { background: #1a1a1a; }
+
+    .auth-divider { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+    .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .auth-divider span { font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
+
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .form-input { padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius-md); font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface); transition: all 0.2s; }
+    .form-input:focus { outline: none; border-color: var(--primary); background: var(--primary-light); }
+    .form-input::placeholder { color: var(--text-light); }
+
+    .auth-submit { padding: 16px 24px; background: var(--primary-gradient); color: white; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; margin-top: 8px; }
+    .auth-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4); }
+
+    .auth-footer { text-align: center; margin-top: 24px; }
+    .auth-footer p { font-size: 13px; color: var(--text-secondary); }
+    .auth-footer a { color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    .auth-terms { font-size: 11px; color: var(--text-light); text-align: center; margin-top: 20px; line-height: 1.5; }
+    .auth-terms a { color: var(--primary); text-decoration: none; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .info-panel { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 24px; padding: 32px; max-width: 320px; box-shadow: var(--shadow-lg); }
+    .info-panel-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .info-panel-logo-icon { width: 48px; height: 48px; background: var(--primary-gradient); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; }
+    .info-panel-logo-icon svg { width: 26px; height: 26px; stroke: white; }
+    .info-panel-logo h2 { font-size: 22px; font-weight: 800; color: var(--text); }
+    .info-panel-logo p { font-size: 12px; color: var(--text-secondary); }
+    .info-panel-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+    .info-features { display: flex; flex-direction: column; gap: 12px; }
+    .info-feature { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--background); border-radius: var(--radius-md); transition: all 0.2s; }
+    .info-feature:hover { background: var(--primary-light); }
+    .info-feature-icon { width: 42px; height: 42px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .info-feature-icon svg { width: 20px; height: 20px; stroke: white; }
+    .info-feature-text h4 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .info-feature-text p { font-size: 11px; color: var(--text-secondary); }
+
+    /* Profile Screen */
+    .profile-header { background: var(--primary-gradient); padding: 40px 20px 30px; text-align: center; position: relative; overflow: hidden; }
+    .profile-header::before { content: ''; position: absolute; top: -50%; right: -30%; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .profile-avatar { width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .profile-avatar svg { width: 40px; height: 40px; stroke: var(--primary); }
+    .profile-name { font-size: 20px; font-weight: 700; color: white; margin-bottom: 4px; }
+    .profile-email { font-size: 13px; color: rgba(255,255,255,0.8); }
+    .profile-menu { padding: 20px; }
+    .profile-menu-item { display: flex; align-items: center; gap: 14px; padding: 16px; background: var(--surface); border-radius: var(--radius-md); margin-bottom: 10px; cursor: pointer; border: 1px solid var(--border-light); transition: all 0.2s; }
+    .profile-menu-item:hover { border-color: var(--primary); box-shadow: var(--shadow-md); }
+    .profile-menu-icon { width: 42px; height: 42px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+    .profile-menu-icon svg { width: 20px; height: 20px; }
+    .profile-menu-text { flex: 1; }
+    .profile-menu-text h4 { font-size: 14px; font-weight: 600; color: var(--text); }
+    .profile-menu-text p { font-size: 12px; color: var(--text-secondary); }
+    .profile-menu-arrow svg { width: 18px; height: 18px; stroke: var(--text-light); }
+    .profile-logout { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; background: #fef2f2; border-radius: var(--radius-md); cursor: pointer; margin-top: 10px; transition: all 0.2s; }
+    .profile-logout:hover { background: #fee2e2; }
+    .profile-logout svg { width: 20px; height: 20px; stroke: var(--discount); }
+    .profile-logout span { font-size: 14px; font-weight: 600; color: var(--discount); }
+
+    /* Guest Profile */
+    .guest-profile { padding: 40px 24px; text-align: center; }
+    .guest-icon { width: 100px; height: 100px; background: var(--background); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .guest-icon svg { width: 50px; height: 50px; stroke: var(--text-light); }
+    .guest-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .guest-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px; }
+    .guest-benefits { text-align: left; background: var(--background); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 24px; }
+    .guest-benefits h4 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    .guest-benefit-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .guest-benefit-item:last-child { margin-bottom: 0; }
+    .guest-benefit-item svg { width: 18px; height: 18px; stroke: var(--success); flex-shrink: 0; }
+    .guest-benefit-item span { font-size: 13px; color: var(--text-secondary); }
+    .guest-login-btn { width: 100%; padding: 16px; background: var(--primary-gradient); color: white; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .guest-login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4); }
+    .guest-register-link { margin-top: 16px; font-size: 13px; color: var(--text-secondary); }
+    .guest-register-link a { color: var(--primary); font-weight: 600; cursor: pointer; }
+
+    @media (max-width: 900px) { .preview-container { flex-direction: column; } .info-panel { order: -1; max-width: 375px; width: 100%; } }
+    @media (max-width: 420px) { body { padding: 0; background: var(--background); } .phone-frame { width: 100%; height: 100vh; border-radius: 0; box-shadow: none; } .phone-frame::before, .phone-frame::after { display: none; } .safe-area-top { height: 20px; } .info-panel { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="preview-container">
+    <div class="info-panel">
+      <div class="info-panel-logo">
+        <div class="info-panel-logo-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
+        <div><h2>VeniViciBuy</h2><p>İndirimli Ürünler</p></div>
+      </div>
+      <p class="info-panel-desc">Türkiye'nin en popüler e-ticaret sitelerindeki en uygun fiyatlı ürünleri tek bir uygulamada keşfedin.</p>
+      <div class="info-features">
+        <div class="info-feature">
+          <div class="info-feature-icon" style="background: linear-gradient(135deg, #f97316, #ea580c);"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg></div>
+          <div class="info-feature-text"><h4>Günün Fırsatları</h4><p>Her gün yeni indirimli ürünler</p></div>
+        </div>
+        <div class="info-feature">
+          <div class="info-feature-icon" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+          <div class="info-feature-text"><h4>En Uygun Fiyatlar</h4><p>İndirimli ve hesaplı ürünler</p></div>
+        </div>
+        <div class="info-feature">
+          <div class="info-feature-icon" style="background: linear-gradient(135deg, #10b981, #059669);"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+          <div class="info-feature-text"><h4>Güvenilir Platformlar</h4><p>Trendyol, Hepsiburada, N11...</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-frame">
+      <div class="phone-content">
+        <div class="safe-area-top"></div>
+        <div class="main-content">
+          <!-- Login Screen -->
+          <div id="login-screen" class="screen auth-screen">
+            <div class="auth-header">
+              <div class="auth-back" onclick="showScreen('profile')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></div>
+              <span class="auth-header-title">Giriş Yap</span>
+            </div>
+            <div class="auth-content">
+              <div class="auth-logo">
+                <div class="auth-logo-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
+                <h1>VeniViciBuy</h1>
+                <p>Hesabınıza giriş yapın</p>
+              </div>
+              <div class="social-buttons">
+                <button class="social-btn google">
+                  <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                  <span>Google ile devam et</span>
+                </button>
+                <button class="social-btn apple">
+                  <svg viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                  <span>Apple ile devam et</span>
+                </button>
+              </div>
+              <div class="auth-divider"><span>veya</span></div>
+              <form class="auth-form" onsubmit="event.preventDefault(); showScreen('home');">
+                <div class="form-group">
+                  <label class="form-label">E-posta</label>
+                  <input type="email" class="form-input" placeholder="ornek@email.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Şifre</label>
+                  <input type="password" class="form-input" placeholder="••••••••">
+                </div>
+                <button type="submit" class="auth-submit">Giriş Yap</button>
+              </form>
+              <div class="auth-footer">
+                <p>Hesabınız yok mu? <a onclick="showScreen('register')">Kayıt olun</a></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Register Screen -->
+          <div id="register-screen" class="screen auth-screen">
+            <div class="auth-header">
+              <div class="auth-back" onclick="showScreen('login')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></div>
+              <span class="auth-header-title">Kayıt Ol</span>
+            </div>
+            <div class="auth-content">
+              <div class="auth-title">Hesap Oluşturun</div>
+              <div class="auth-subtitle">Fırsatları kaçırmamak için hemen üye olun</div>
+              <div class="social-buttons">
+                <button class="social-btn google">
+                  <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                  <span>Google ile kayıt ol</span>
+                </button>
+                <button class="social-btn apple">
+                  <svg viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                  <span>Apple ile kayıt ol</span>
+                </button>
+              </div>
+              <div class="auth-divider"><span>veya e-posta ile</span></div>
+              <form class="auth-form" onsubmit="event.preventDefault(); showScreen('home');">
+                <div class="form-group">
+                  <label class="form-label">Ad Soyad</label>
+                  <input type="text" class="form-input" placeholder="Adınız Soyadınız">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">E-posta</label>
+                  <input type="email" class="form-input" placeholder="ornek@email.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Şifre</label>
+                  <input type="password" class="form-input" placeholder="En az 8 karakter">
+                </div>
+                <button type="submit" class="auth-submit">Kayıt Ol</button>
+              </form>
+              <div class="auth-terms">
+                Kayıt olarak <a href="#">Kullanım Koşulları</a> ve <a href="#">Gizlilik Politikası</a>'nı kabul etmiş olursunuz.
+              </div>
+              <div class="auth-footer">
+                <p>Zaten hesabınız var mı? <a onclick="showScreen('login')">Giriş yapın</a></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Home Screen -->
+          <div id="home-screen" class="screen active">
+            <div class="header">
+              <div class="header-logo">
+                <div class="header-logo-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
+                <div><div class="header-title">VeniViciBuy</div><div class="header-subtitle">İndirimli Ürünler</div></div>
+              </div>
+              <div class="header-actions">
+                <div class="icon-btn" onclick="showScreen('search')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
+              </div>
+            </div>
+            <div class="hero-section">
+              <div class="hero-banner">
+                <div class="hero-content">
+                  <div class="hero-badge"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Tasarruf Et</span></div>
+                  <div class="hero-title">En Uygun Fiyatlı<br>Ürünler Tek Yerde</div>
+                  <div class="hero-subtitle">Trendyol, Hepsiburada, N11 ve daha fazlasından indirimli ürünler</div>
+                  <div class="hero-cta" onclick="showScreen('search')">Fırsatları Keşfet<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-header"><div class="section-title">Kategoriler</div><div class="section-link" onclick="showScreen('categories')">Tümü<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div></div>
+              <div class="categories-grid">
+                <div class="category-item" onclick="showScreen('categories')"><div class="category-icon" style="background: rgba(59, 130, 246, 0.12);"><svg fill="none" stroke="#3b82f6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></div><div class="category-name">Elektronik</div></div>
+                <div class="category-item" onclick="showScreen('categories')"><div class="category-icon" style="background: rgba(236, 72, 153, 0.12);"><svg fill="none" stroke="#ec4899" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg></div><div class="category-name">Moda</div></div>
+                <div class="category-item" onclick="showScreen('categories')"><div class="category-icon" style="background: rgba(34, 197, 94, 0.12);"><svg fill="none" stroke="#22c55e" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></div><div class="category-name">Ev & Yaşam</div></div>
+                <div class="category-item" onclick="showScreen('categories')"><div class="category-icon" style="background: rgba(249, 115, 22, 0.12);"><svg fill="none" stroke="#f97316" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div class="category-name">Spor</div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-header"><div class="section-title"><div class="section-title-icon" style="background: rgba(239, 68, 68, 0.12);"><svg fill="none" stroke="#ef4444" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg></div>Günün Fırsatları</div></div>
+              <div class="products-scroll">
+                <div class="product-skeleton"><div class="skeleton-image"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div><div class="skeleton-content"><div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-line price"></div></div></div>
+                <div class="product-skeleton"><div class="skeleton-image"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div><div class="skeleton-content"><div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-line price"></div></div></div>
+                <div class="product-skeleton"><div class="skeleton-image"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div><div class="skeleton-content"><div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-line price"></div></div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-header"><div class="section-title">Hızlı Erişim</div></div>
+              <div class="quick-actions">
+                <div class="quick-action-card" onclick="showScreen('campaigns')"><div class="quick-action-icon" style="background: rgba(249, 115, 22, 0.12);"><svg fill="none" stroke="#f97316" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg></div><div class="quick-action-text"><h4>Kampanyalar</h4><p>Güncel fırsatlar</p></div></div>
+                <div class="quick-action-card" onclick="showScreen('categories')"><div class="quick-action-icon" style="background: rgba(139, 92, 246, 0.12);"><svg fill="none" stroke="#8b5cf6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><div class="quick-action-text"><h4>Kategoriler</h4><p>Tüm ürünler</p></div></div>
+              </div>
+            </div>
+            <div class="platforms-section">
+              <div class="platforms-header">Ürün Kaynakları</div>
+              <div class="platforms-row">
+                <div class="platform-chip"><div class="platform-dot" style="background: #F27A1A;"></div><span>Trendyol</span></div>
+                <div class="platform-chip"><div class="platform-dot" style="background: #FF6000;"></div><span>Hepsiburada</span></div>
+                <div class="platform-chip"><div class="platform-dot" style="background: #7B2D8E;"></div><span>N11</span></div>
+                <div class="platform-chip"><div class="platform-dot" style="background: #FF9900;"></div><span>Amazon</span></div>
+              </div>
+            </div>
+            <div style="height: 20px;"></div>
+          </div>
+
+          <!-- Categories Screen -->
+          <div id="categories-screen" class="screen">
+            <div class="page-header"><div class="page-title">Kategoriler</div><div class="page-subtitle">İndirimli ürünleri kategorilerde keşfedin</div></div>
+            <div class="categories-page-grid">
+              <div class="category-card"><div class="category-card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div><div class="category-card-icon" style="background: rgba(59, 130, 246, 0.12);"><svg fill="none" stroke="#3b82f6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></div><div class="category-card-name">Elektronik</div><div class="category-card-count">1.234 ürün</div></div>
+              <div class="category-card"><div class="category-card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div><div class="category-card-icon" style="background: rgba(236, 72, 153, 0.12);"><svg fill="none" stroke="#ec4899" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg></div><div class="category-card-name">Moda</div><div class="category-card-count">3.456 ürün</div></div>
+              <div class="category-card"><div class="category-card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div><div class="category-card-icon" style="background: rgba(34, 197, 94, 0.12);"><svg fill="none" stroke="#22c55e" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></div><div class="category-card-name">Ev & Yaşam</div><div class="category-card-count">2.789 ürün</div></div>
+              <div class="category-card"><div class="category-card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div><div class="category-card-icon" style="background: rgba(249, 115, 22, 0.12);"><svg fill="none" stroke="#f97316" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div class="category-card-name">Spor & Outdoor</div><div class="category-card-count">987 ürün</div></div>
+              <div class="category-card"><div class="category-card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div><div class="category-card-icon" style="background: rgba(168, 85, 247, 0.12);"><svg fill="none" stroke="#a855f7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg></div><div class="category-card-name">Kozmetik</div><div class="category-card-count">1.543 ürün</div></div>
+              <div class="category-card"><div class="category-card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div><div class="category-card-icon" style="background: rgba(6, 182, 212, 0.12);"><svg fill="none" stroke="#06b6d4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div><div class="category-card-name">Kitap & Hobi</div><div class="category-card-count">654 ürün</div></div>
+            </div>
+          </div>
+
+          <!-- Search Screen -->
+          <div id="search-screen" class="screen">
+            <div class="page-header"><div class="page-title">Ürün Ara</div><div class="page-subtitle">İndirimli ürünlerde arama yapın</div></div>
+            <div class="search-bar">
+              <div class="search-input-container">
+                <div class="search-input-wrap"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><input type="text" placeholder="Ürün, marka veya kategori..."></div>
+                <button class="search-btn">Ara</button>
+              </div>
+            </div>
+            <div class="search-empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><h3>Ürün Aramaya Başlayın</h3><p>Aradığınız indirimli ürünü yukarıdaki alana yazarak bulabilirsiniz.</p></div>
+          </div>
+
+          <!-- Campaigns Screen -->
+          <div id="campaigns-screen" class="screen">
+            <div class="page-header"><div class="page-title">Kampanyalar</div><div class="page-subtitle">Platformlardaki güncel indirimler</div></div>
+            <div class="campaigns-list">
+              <div class="campaign-card"><div class="campaign-banner" style="background: linear-gradient(135deg, #F27A1A 0%, #e85d04 100%);"><div class="campaign-discount">%50</div><div class="campaign-banner-title">Yaz Sonu İndirimleri</div></div><div class="campaign-body"><div class="campaign-meta"><span class="campaign-platform-tag" style="background: #F27A1A;">Trendyol</span><span class="campaign-discount-tag">%50 indirim</span></div><div class="campaign-title">Yaz Sonu İndirimleri Başladı!</div><div class="campaign-desc">Seçili ürünlerde %50'ye varan indirimler sizi bekliyor.</div><div class="campaign-footer"><div class="campaign-date"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Son: 31 Ağustos</div><div class="campaign-cta">Kampanyaya Git<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div></div></div></div>
+              <div class="campaign-card"><div class="campaign-banner" style="background: linear-gradient(135deg, #FF6000 0%, #cc4d00 100%);"><div class="campaign-discount">%35</div><div class="campaign-banner-title">Teknoloji Festivali</div></div><div class="campaign-body"><div class="campaign-meta"><span class="campaign-platform-tag" style="background: #FF6000;">Hepsiburada</span><span class="campaign-discount-tag">%35 indirim</span></div><div class="campaign-title">Teknoloji Festivali</div><div class="campaign-desc">Bilgisayar, telefon ve aksesuarlarda büyük fırsatlar.</div><div class="campaign-footer"><div class="campaign-date"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Son: 15 Eylül</div><div class="campaign-cta">Kampanyaya Git<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div></div></div></div>
+              <div class="campaign-card"><div class="campaign-banner" style="background: linear-gradient(135deg, #7B2D8E 0%, #5b2166 100%);"><div class="campaign-discount">%40</div><div class="campaign-banner-title">Okula Dönüş</div></div><div class="campaign-body"><div class="campaign-meta"><span class="campaign-platform-tag" style="background: #7B2D8E;">N11</span><span class="campaign-discount-tag">%40 indirim</span></div><div class="campaign-title">Okula Dönüş Kampanyası</div><div class="campaign-desc">Kırtasiye, çanta ve okul malzemelerinde süper fırsatlar.</div><div class="campaign-footer"><div class="campaign-date"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Son: 10 Eylül</div><div class="campaign-cta">Kampanyaya Git<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div></div></div></div>
+            </div>
+          </div>
+
+          <!-- Profile Screen (Guest) -->
+          <div id="profile-screen" class="screen">
+            <div class="page-header"><div class="page-title">Hesabım</div><div class="page-subtitle">Profil ve ayarlar</div></div>
+            <div class="guest-profile">
+              <div class="guest-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>
+              <div class="guest-title">Hoş Geldiniz!</div>
+              <div class="guest-desc">Giriş yaparak tüm özelliklere erişebilir, favorilerinizi kaydedebilirsiniz.</div>
+              <div class="guest-benefits">
+                <h4>Üyelik Avantajları</h4>
+                <div class="guest-benefit-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Favori ürünlerinizi kaydedin</span></div>
+                <div class="guest-benefit-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Fiyat düşünce bildirim alın</span></div>
+                <div class="guest-benefit-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Özel kampanyalardan haberdar olun</span></div>
+                <div class="guest-benefit-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Arama geçmişinizi saklayın</span></div>
+              </div>
+              <button class="guest-login-btn" onclick="showScreen('login')">Giriş Yap</button>
+              <div class="guest-register-link">Hesabınız yok mu? <a onclick="showScreen('register')">Kayıt olun</a></div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item active" onclick="showScreen('home')" id="tab-home"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg><span>Ana Sayfa</span></div>
+          <div class="tab-item" onclick="showScreen('categories')" id="tab-categories"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg><span>Kategoriler</span></div>
+          <div class="tab-item" onclick="showScreen('search')" id="tab-search"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Ara</span></div>
+          <div class="tab-item" onclick="showScreen('campaigns')" id="tab-campaigns"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg><span>Kampanyalar</span></div>
+          <div class="tab-item" onclick="showScreen('profile')" id="tab-profile"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span>Hesabım</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function showScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.getElementById(screenName + '-screen').classList.add('active');
+      const tab = document.getElementById('tab-' + screenName);
+      if (tab) tab.classList.add('active');
+      document.querySelector('.main-content').scrollTop = 0;
+    }
+  </script>
+</body>
+</html>
